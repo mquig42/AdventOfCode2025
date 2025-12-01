@@ -1,3 +1,12 @@
+;;;AoC_01.rkt
+;;;2025-12-01
+;;;Mike Quigley
+
+;;;And we're off!
+;;;This is a quick and dirty program that solves both parts of today's problem
+;;;solve1 and solve2 are nearly identical and should be refactored
+;;;and it may be better to have an input parsing function that can be mapped
+;;;over the raw output from file->lines
 #lang racket
 
 (define (solve1 pos count lst)
@@ -18,6 +27,7 @@
                 (+ (count-zero op pos dist 0) count)
                 (cdr lst)))))
 
+;Count the number of times the dial passes zero
 (define (count-zero op pos dist count)
   (if (eq? dist 0) count
       (let ((newpos (modulo (op pos 1) 100)))
