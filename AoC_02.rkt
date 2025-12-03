@@ -13,23 +13,13 @@
 ;;;Tried that approach for part 1. It works, but is a bit slower
 #lang racket
 
-;Is x an invalid ID, based on the rules for part 1?
-;We can reject anything with an odd number of digits
-(define (invalid-id? x)
-  (let* ((num-digits (inexact->exact (+ 1 (floor (log x 10)))))
-         (pivot (expt 10 (/ num-digits 2))))
-    (if (odd? num-digits) #f
-        (eq? (modulo x pivot) (quotient x pivot)))))
-
 ;Find the sum of all invalid ids in range
-(define (process-range lst)
-  (foldl + 0 (filter invalid-id? (inclusive-range (first lst) (second lst)))))
-
-(define (process-range-2 lst)
+(define (process-range range-lst invalids)
   (foldl + 0
          (set->list
-          (set-intersect all-invalids-2
-           (list->set (inclusive-range (first lst) (second lst)))))))
+          (set-intersect invalids
+           (list->set
+            (inclusive-range (first range-lst) (second range-lst)))))))
 
 ;Generates a repeated number
 ;eg. (repeat 123 2) returns 123123
@@ -54,6 +44,9 @@
                      (else 10))))
     (iter times (set))))
 
+(define all-invalids-1
+  (list->set (map (λ (x) (repeat x 2)) (range 1 100000))))
+
 (define all-invalids-2
   (foldl set-union (set) (map repeat-all (range 1 100000))))
 
@@ -61,6 +54,6 @@
                    (string-split (file->string "Input02.txt") ",")))
 
 (display "Part 1: ")
-(foldl + 0 (map process-range input))
+(foldl + 0 (map (λ (x) (process-range x all-invalids-1)) input))
 (display "Part 2: ")
-(foldl + 0 (map process-range-2 input))
+(foldl + 0 (map (λ (x) (process-range x all-invalids-2)) input))
