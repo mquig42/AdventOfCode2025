@@ -26,6 +26,7 @@
       (parse-lines (add1 row) (cdr lines)
                    (set-union acc (parse-line row 0 (car lines) acc)))))
 
+;;For part 1: functions to count all rolls of paper adjacent to a coord
 (define (enumerate-all-neighbours coord)
   (let ((row (get-row coord))
         (col (get-col coord)))
@@ -43,9 +44,22 @@
          (map (λ (x) (if (set-member? grid x) 1 0))
               (enumerate-all-neighbours coord))))
 
+;Gets a set of all rolls that can be removed
+(define (enumerate-removable grid)
+  (list->set (filter (λ (x) (< (count-neighbours x grid) 4)) (set->list grid))))
+
+;Part 2 solution: get the total number of removable rolls
+(define (count-all-removable grid acc)
+  (let ((removable (enumerate-removable grid)))
+    (if (eq? (set-count removable) 0) acc
+        (count-all-removable (set-subtract grid removable)
+                             (+ acc (set-count removable))))))
+
 (define input
   (parse-lines 0 (map string->list (file->lines "Input04.txt")) (set)))
 
 (display "Part 1: ")
 (length (filter (λ (x) (< (count-neighbours x input) 4))
                 (set->list input)))
+(display "Part 2: ")
+(count-all-removable input 0)
