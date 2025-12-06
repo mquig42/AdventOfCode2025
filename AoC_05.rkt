@@ -35,10 +35,10 @@
 
 ;Merge all ranges in lst, return new list of ranges
 (define (merge-all lst)
-  ;Merges the FIRST element of lst
-  ;Returns a new list consisting of the first element
-  ;with all the overlapping ranges merged onto it
-  ;followed by the non-overlapping elements
+  ;Merges a against every element of lst
+  ;Returns a new list containing:
+  ;a with every overlapping range merged onto it
+  ;followed by all the non-overlapping ranges
   (define (merge-first a lst acc)
     (cond ((null? lst) (cons a acc))
           ((overlap? a (car lst))
