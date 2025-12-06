@@ -50,7 +50,8 @@
     (if (null? unmerged) merged
         (let ((m (merge-first (car unmerged) (cdr unmerged) null)))
           (iter (cons (car m) merged) (cdr m)))))
-  
+
+  ;Before starting, sort lst by the beginning of each range
   (iter null (sort lst (λ (a b) (< (car a) (car b))))))
 
 (define (range-size r)
