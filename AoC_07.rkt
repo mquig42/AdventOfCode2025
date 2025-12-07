@@ -32,9 +32,22 @@
                       (read-line row 0 (string->list (car lines)) splitters))))
 
 (define (count-splits row beams count)
-  42)
+  (define (process-beams row beams new-beams count)
+    (cond ((set-empty? beams) (list new-beams count))
+          ((set-member? splitters (make-coord row (set-first beams)))
+           (process-beams row (set-rest beams)
+                          (set-add
+                           (set-add new-beams (sub1 (set-first beams)))
+                           (add1 (set-first beams)))
+                          (add1 count)))
+          (else (process-beams row (set-rest beams)
+                               (set-add new-beams (set-first beams))
+                               count))))
+  (if (eq? row rowmax) count
+      (let ((row-result (process-beams row beams (set) count)))
+        (count-splits (add1 row) (first row-result) (second row-result)))))
 
-(define input (file->lines "Test07.txt"))
+(define input (file->lines "Input07.txt"))
 (define splitters (read-splitters 0 input (set)))
 (define beam-start (set (string-find (car input) "S")))
 (define rowmax (length input))
