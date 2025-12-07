@@ -8,6 +8,13 @@
 ;;;(the 5th one on the bottom row) are hit, so 21 in total.
 ;;;Another thing to note: Every splitter is surrounded by empty space,
 ;;;so the new beams it creates will not go directly onto another splitter.
+;;;For part 2, they're going with a new interpretation. Instead of a beam
+;;;splitter creating two beams, it creates two timelines. I have to find the
+;;;total number of timelines created.
+;;;First question: why isn't it just the number of splits times 2?
+;;;Not all splits are equal. Beams recombine, so there may be multiple ways
+;;;of reaching the same place. The first splitter creates two timelines,
+;;;a later one (with 5 paths leading to it) creates 10.
 #lang racket
 
 ;;Coord datatype
@@ -19,17 +26,16 @@
   (cdr coord))
 
 ;Generate a set of coords for all beam splitters
-(define (read-splitters row lines splitters)
-  (define (read-line row col line splitters)
-    (cond ((null? line) splitters)
-          ((eq? #\^ (car line))
-           (read-line row (add1 col) (cdr line)
-                      (set-add splitters (make-coord row col))))
-          (else
-           (read-line row (add1 col) (cdr line) splitters))))
-  (if (null? lines) splitters
-      (read-splitters (add1 row) (cdr lines)
-                      (read-line row 0 (string->list (car lines)) splitters))))
+(define (read-splitters lines)
+  (define (iter row col lines splitters)
+    (cond ((= row rowmax) splitters)
+          ((= col colmax)
+           (iter (add1 row) 0 (cdr lines) splitters))
+          ((eq? (string-ref (car lines) col) #\^)
+           (iter row (add1 col) lines
+                 (set-add splitters (make-coord row col))))
+          (else (iter row (add1 col) lines splitters))))
+  (iter 0 0 lines (set)))
 
 (define (count-splits row beams count)
   (define (process-beams row beams new-beams count)
@@ -48,10 +54,10 @@
         (count-splits (add1 row) (first row-result) (second row-result)))))
 
 (define input (file->lines "Input07.txt"))
-(define splitters (read-splitters 0 input (set)))
+(define rowmax (sub1 (length input)))
+(define colmax (sub1 (string-length (car input))))
+(define splitters (read-splitters input))
 (define beam-start (set (string-find (car input) "S")))
-(define rowmax (length input))
-(define colmax (string-length (car input)))
 
 (display "Part 1: ")
 (count-splits 0 beam-start 0)
