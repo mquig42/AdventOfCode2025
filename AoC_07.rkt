@@ -37,6 +37,7 @@
           (else (iter row (add1 col) lines splitters))))
   (iter 0 0 lines (set)))
 
+;Part 1 solution. Counts the number of splitters that were hit
 (define (count-splits)
   (define (iter row beams new-beams count)
     (cond ((= row rowmax) count)
@@ -51,6 +52,15 @@
                       (set-add new-beams (set-first beams))
                       count))))
   (iter 0 beam-start (set) 0))
+
+;I'm using a hashmap to count the number of timelines that lead to each column
+;This function implements a split operation on that hashmap
+(define (hash-split beams col)
+  (hash-set
+   (hash-set
+    (hash-set beams col 0)
+    (sub1 col) (+ (hash-ref beams col 0) (hash-ref beams (sub1 col) 0)))
+   (add1 col) (+ (hash-ref beams col 0) (hash-ref beams (sub1 col) 0))))
 
 (define input (file->lines "Input07.txt"))
 (define rowmax (sub1 (length input)))
