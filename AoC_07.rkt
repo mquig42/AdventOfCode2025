@@ -38,20 +38,20 @@
   (iter 0 0 lines (set)))
 
 ;Part 1 solution. Counts the number of splitters that were hit
-(define (count-splits)
-  (define (iter row beams new-beams count)
-    (cond ((= row rowmax) count)
+(define (count-splits update-acc acc)
+  (define (iter row beams new-beams acc)
+    (cond ((= row rowmax) acc)
           ((set-empty? beams)
-           (iter (add1 row) new-beams (set) count))
+           (iter (add1 row) new-beams (set) acc))
           ((set-member? splitters (make-coord row (set-first beams)))
            (iter row (set-rest beams)
                  (set-add (set-add new-beams (sub1 (set-first beams)))
                           (add1 (set-first beams)))
-                 (add1 count)))
+                 (update-acc acc (set-first beams))))
           (else (iter row (set-rest beams)
                       (set-add new-beams (set-first beams))
-                      count))))
-  (iter 0 beam-start (set) 0))
+                      acc))))
+  (iter 0 beam-start (set) acc))
 
 ;I'm using a hashmap to count the number of timelines that lead to each column
 ;This function implements a split operation on that hashmap
@@ -60,7 +60,7 @@
    (hash-set
     (hash-set beams col 0)
     (sub1 col) (+ (hash-ref beams col 0) (hash-ref beams (sub1 col) 0)))
-   (add1 col) (+ (hash-ref beams col 0) (hash-ref beams (sub1 col) 0))))
+   (add1 col) (+ (hash-ref beams col 0) (hash-ref beams (add1 col) 0))))
 
 (define input (file->lines "Input07.txt"))
 (define rowmax (sub1 (length input)))
@@ -69,4 +69,7 @@
 (define beam-start (set (string-find (car input) "S")))
 
 (display "Part 1: ")
-(count-splits)
+(count-splits (λ (acc col) (add1 acc)) 0)
+(display "Part 2: ")
+(foldl + 0
+       (hash-values (count-splits hash-split (hash (set-first beam-start) 1))))
