@@ -37,7 +37,8 @@
           (else (iter row (add1 col) lines splitters))))
   (iter 0 0 lines (set)))
 
-;Part 1 solution. Counts the number of splitters that were hit
+;Simulates the beam passing through the splitters
+;Can find the solution to either part by using different update-acc functions
 (define (count-splits update-acc acc)
   (define (iter row beams new-beams acc)
     (cond ((= row rowmax) acc)
