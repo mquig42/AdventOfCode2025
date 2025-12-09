@@ -7,8 +7,6 @@
 ;;;Part 2 I solved manually: keep increasing the number of connections
 ;;;until I get one circuit of size 1000, then look at the last one in the list.
 ;;;I might come back and automate it later
-;;;Also, shortest-distances is slow. Changing distance to use define/memoize
-;;;helps a little, but the problem may be inherent to sorting large lists
 #lang racket
 
 ;Generates a list of all possible pairs of elements in lst
@@ -29,7 +27,7 @@
 
 ;Finds the n pairs which are closest together
 (define (shortest-distances lst n)
-  (take (sort lst (λ (a b) (< (distance a) (distance b)))) n))
+  (take (sort lst < #:key distance #:cache-keys? true) n))
 
 ;;Part 1 is essentially merging overlapping ranges, like day 5
 ;;so I'm using a similar approach
