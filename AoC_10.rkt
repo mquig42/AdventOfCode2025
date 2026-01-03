@@ -34,10 +34,16 @@
 (define (parse-button str)
   (foldl (λ (a b) (+ (expt 2 a) b)) 0 (extract-numbers str)))
 
-(define (parse-machine str)
+(define (parse-machine-1 str)
   (let ((sp (string-split str)))
     (list (parse-goal (car sp))
           (map parse-button (drop-right (cdr sp) 1))
+          0)))
+
+(define (parse-machine-2 str)
+  (let ((sp (string-split str)))
+    (list 0
+          (map extract-numbers (drop-right (cdr sp) 1))
           (extract-numbers (last sp)))))
 
 ;Getters
@@ -64,9 +70,26 @@
            (iter lights (/ pow2 2) (cons #\. lst)))))
   (list->string (iter lights (largest-pow2 lights 1) null)))
 
-(define (enumerate-moves machine state)
+(define (enumerate-moves-1 machine state)
   (map (λ (x) (cons (add1 (car state)) (bitwise-xor (cdr state) x)))
        (buttons machine)))
+
+(define (increment-joltages counters button)
+  (let ((r (vector-copy counters)))
+    (for-each (λ (x) (vector-set! r x (add1 (vector-ref r x)))) button)
+    r))
+
+(define (enumerate-moves-2 machine state)
+  (map (λ (x) (cons (add1 (car state))
+                    (increment-joltages (cdr state) x)))
+       (buttons machine)))
+
+(define (goal-2? state goal)
+  (define (iter a b)
+    (cond ((and (null? a) (null? b)) true)
+          ((= (car a) (car b)) (iter (cdr a) (cdr b)))
+          (else false)))
+  (iter (vector->list state) goal))
 
 ;;Queue functions
 ;Creates a queue element, which has a priority and value
@@ -108,10 +131,22 @@
     (hash-set! distances start 0)
     (visit (q-lowest! unvisited))))
 
-(define input (map parse-machine (file->lines "Input10.txt")))
+(define input-1 (map parse-machine-1 (file->lines "Input10.txt")))
+(define input-2 (map parse-machine-2 (file->lines "Input10.txt")))
 
 (display "Part 1: ")
 (foldl + 0
        (map (λ (machine)
-              (dijkstra machine 0 (λ (x) (= x (car machine))) enumerate-moves))
-            input))
+              (dijkstra machine 0
+                        (λ (x) (= x (car machine)))
+                        enumerate-moves-1))
+            input-1))
+
+(display "Part 2: ")
+;(dijkstra (car input-2) #(0 0 0 0) (λ (x) (goal-2? x (joltages (car input-2)))) enumerate-moves-2)
+(foldl + 0
+       (map (λ (machine)
+              (dijkstra machine (make-vector (length (joltages machine)))
+                        (λ (x) (goal-2? x (joltages machine)))
+                        enumerate-moves-2))
+            input-2))
