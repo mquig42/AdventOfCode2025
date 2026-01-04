@@ -7,6 +7,16 @@
 ;;;It seems likely that part 2 will be a similar question, but using the last
 ;;;section of each line to weight the moves. Dijkstra could solve that.
 ;;;This is the year I finally make a fully-general Dijkstra solver
+
+;;;Update: Dijkstra is probably the wrong approach, though it does work for the
+;;;example input, and for part 1. For part 2 it just takes too long.
+;;;The order in which the buttons are pressed doesn't matter, but Dijkstra
+;;;already deals with multiple paths that lead to the same place, so
+;;;recursion and memoization might not be any better.
+;;;Since counters only go up, I should reject anything where any counter
+;;;is past its goal value.
+;;;The filter in the visit function is probably wrong. Don't enqueue anything
+;;;that there's already a shorter route to. It should not be as slow as it is.
 #lang racket
 (require data/heap)
 
@@ -79,10 +89,18 @@
     (for-each (λ (x) (vector-set! r x (add1 (vector-ref r x)))) button)
     r))
 
+(define (under-limit? machine state)
+  (define (iter a b)
+    (cond ((and (null? a) (null? b)) true)
+          ((<= (car b) (car a)) (iter (cdr a) (cdr b)))
+          (else false)))
+  (iter (joltages machine) (vector->list (cdr state))))
+
 (define (enumerate-moves-2 machine state)
-  (map (λ (x) (cons (add1 (car state))
-                    (increment-joltages (cdr state) x)))
-       (buttons machine)))
+  (filter (λ (x) under-limit? machine x)
+          (map (λ (x) (cons (add1 (car state))
+                            (increment-joltages (cdr state) x)))
+               (buttons machine))))
 
 (define (goal-2? state goal)
   (define (iter a b)
@@ -112,21 +130,18 @@
   (let ((unvisited (make-heap q<=))
         (distances (make-hash)))
     (define (visit node)
-      (let ((dist (car node))
-            (state (cdr node)))
-        (cond ((goal? state) dist)
-              (else
-               (for-each (λ (x)
-                           (let ((old-dist (hash-ref distances (cdr x) +inf.0))
-                                 (new-dist (car x)))
-                             (cond ((> old-dist new-dist)
-                                    (hash-set! distances (cdr x) new-dist)
-                                    (q-reduce-priority!
-                                     unvisited (cdr x) old-dist new-dist)))))
-                         (filter (λ (x) (not (hash-has-key? distances (cdr x))))
-                                 (enumerate-moves grid node)))
-               (hash-set! distances state dist)
-               (visit (q-lowest! unvisited))))))
+      (cond ((goal? (cdr node)) (car node))
+            (else
+             (for-each (λ (x)
+                         (let ((state (cdr x))
+                               (new-dist (car x))
+                               (old-dist (hash-ref distances (cdr x) +inf.0)))
+                           (cond ((> old-dist new-dist)
+                                  (hash-set! distances state new-dist)
+                                  (q-reduce-priority!
+                                   unvisited state old-dist new-dist)))))
+                       (enumerate-moves grid node))
+             (visit (q-lowest! unvisited)))))
     (heap-add! unvisited (q-element 0 start))
     (hash-set! distances start 0)
     (visit (q-lowest! unvisited))))
@@ -143,10 +158,15 @@
             input-1))
 
 (display "Part 2: ")
-;(dijkstra (car input-2) #(0 0 0 0) (λ (x) (goal-2? x (joltages (car input-2)))) enumerate-moves-2)
-(foldl + 0
-       (map (λ (machine)
-              (dijkstra machine (make-vector (length (joltages machine)))
-                        (λ (x) (goal-2? x (joltages machine)))
-                        enumerate-moves-2))
-            input-2))
+;(foldl + 0
+;       (map (λ (machine)
+;              (dijkstra machine (make-vector (length (joltages machine)))
+;                        (λ (x) (goal-2? x (joltages machine)))
+;                        enumerate-moves-2))
+;            input-2))
+(define machine (list-ref input-2 3))
+(time
+(dijkstra machine (make-vector (length (joltages machine)))
+          (λ (x) (goal-2? x (joltages machine)))
+          enumerate-moves-2)
+)
